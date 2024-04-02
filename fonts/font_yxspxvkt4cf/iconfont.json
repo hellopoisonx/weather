@@ -1,0 +1,23 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "5996711",
+      "name": "华氏度",
+      "font_class": "fahrenheit-degree",
+      "unicode": "e6ee",
+      "unicode_decimal": 59118
+    },
+    {
+      "icon_id": "12209274",
+      "name": "摄氏度",
+      "font_class": "sheshidu",
+      "unicode": "e9a6",
+      "unicode_decimal": 59814
+    }
+  ]
+}
