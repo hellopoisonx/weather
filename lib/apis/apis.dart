@@ -51,7 +51,7 @@ final _geoDio = Dio(
 
 final _weaDio = Dio(
   BaseOptions(
-      baseUrl: "https://api.qweather.com/v7/weather/",
+      baseUrl: "https://devapi.qweather.com/v7/weather/",
       responseType: ResponseType.json,
       receiveTimeout: const Duration(milliseconds: 4000),
       connectTimeout: const Duration(milliseconds: 4000),

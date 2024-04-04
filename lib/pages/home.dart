@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:weather/apis/apis.dart';
 import 'package:weather/components/qw_icons.dart';
 import 'package:weather/models/controllers/home_controller.dart';
+import 'package:weather/models/controllers/settings_controller.dart';
 import 'package:weather/widgets/temp_trend_chart.dart';
+import 'package:weather/widgets/temperature.dart';
 
-class Home extends StatelessWidget {
-  const Home({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final HomeController home = Get.find();
+    final SettingsController settings = Get.find();
+    settings.loadSettings();
     queryLocation().then((value) {
       home.currentRegionId.value = value;
       home.updateWeather();
@@ -21,9 +24,7 @@ class Home extends StatelessWidget {
       floatingActionButton: Obx(() => home.isLoading.value != PageStatus.ok
           ? FloatingActionButton(
               shape: const CircleBorder(),
-              onPressed: () {
-                home.updateWeather();
-              },
+              onPressed: home.updateWeather,
               child: home.isLoading.value == PageStatus.loading
                   ? CircularProgressIndicator(
                       color: Theme.of(context)
@@ -101,7 +102,10 @@ class Home extends StatelessWidget {
                             Align(
                                 alignment: Alignment.topLeft,
                                 child: Text(
-                                  "观测时间:${home.obsTime}",
+                                  "观测时间:${home.getFxTime(
+                                    home.weaNow.value.now?.obstime ?? "-",
+                                    "M:d HH:mm",
+                                  )}",
                                   textAlign: TextAlign.start,
                                   style: TextStyle(
                                       fontSize: 12,
@@ -109,35 +113,15 @@ class Home extends StatelessWidget {
                                           .colorScheme
                                           .onPrimary),
                                 )),
-                            Row(
-                              children: [
-                                Text(
-                                  home.weaNow.value.now?.temp ?? "-",
-                                  style: TextStyle(
-                                    fontSize: 55,
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                  ),
-                                ),
-                                const Icon(
-                                  QwIcons.centigrade,
-                                  size: 55,
-                                ),
-                              ],
+                            Temperature(
+                              home.weaNow.value.now?.temp ?? "-",
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             Row(
                               children: [
-                                Text(
+                                Temperature(
                                   "体感温度:${home.weaNow.value.now?.feelslike ?? "-"}",
                                   style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Icon(
-                                  QwIcons.centigrade,
-                                  size: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.fontSize,
                                 ),
                                 const Spacer(),
                               ],
@@ -184,8 +168,10 @@ class Home extends StatelessWidget {
               : Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
                   decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.all(Radius.circular(15)),
+                      borderRadius: const BorderRadius.all(Radius.circular(8)),
                       color: Theme.of(context)
                           .colorScheme
                           .secondaryContainer
@@ -193,11 +179,16 @@ class Home extends StatelessWidget {
                   height: 180,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 15),
-                      width: 800,
+                    child: SizedBox(
+                      // margin: const EdgeInsets.symmetric(horizontal: 15),
+                      width: 1200,
                       child: TempTrendChart(
-                        items: home.weaHour.value.hourly!
+                        getDotDataWidget: (v) => Temperature(
+                          v.toInt().toString(),
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                        itemMaxSize: 70,
+                        itemMax: home.weaHour.value.hourly!
                             .map(
                               (e) => Container(
                                   margin:
@@ -205,33 +196,19 @@ class Home extends StatelessWidget {
                                   child: Column(
                                     children: [
                                       Text(
-                                        home.getFxTime(e.fxtime),
+                                        home.getFxTime(e.fxtime, "HH时"),
                                         style: Theme.of(context)
                                             .textTheme
-                                            .bodyLarge,
+                                            .titleMedium,
                                       ),
+                                      const SizedBox(height: 15),
                                       Icon(
                                         QwIcons.parseCode(e.icon),
                                         size: Theme.of(context)
                                             .textTheme
-                                            .titleMedium
+                                            .titleLarge
                                             ?.fontSize,
                                       ),
-                                      Row(children: [
-                                        Text(
-                                          e.temp,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium,
-                                        ),
-                                        Icon(
-                                          QwIcons.centigrade,
-                                          size: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.fontSize,
-                                        ),
-                                      ])
                                     ],
                                   )),
                             )
@@ -245,69 +222,154 @@ class Home extends StatelessWidget {
                   ),
                 ),
         );
+        // final Widget dailyView = SliverToBoxAdapter(
+        //   child: Container(
+        //     margin: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+        //     decoration: BoxDecoration(
+        //       borderRadius: const BorderRadius.all(Radius.circular(13)),
+        //       color: Theme.of(context)
+        //           .colorScheme
+        //           .secondaryContainer
+        //           .withOpacity(0.1),
+        //     ),
+        //     height: 400,
+        //     child: ListView.builder(
+        //       itemCount: home.weaDaily.value.daily?.length,
+        //       itemBuilder: (ctx, idx) => ListTile(
+        //         leading: Text(
+        //           DateFormat("EEEE", "zh_CN").format(
+        //               DateTime.parse(home.weaDaily.value.daily![idx]!.fxDate!)),
+        //           style: Theme.of(context).textTheme.titleMedium,
+        //         ),
+        //         titleAlignment: ListTileTitleAlignment.center,
+        //         title: Row(
+        //           children: [
+        //             const Spacer(),
+        //             Icon(
+        //                 QwIcons.parseCode(
+        //                     home.weaDaily.value.daily![idx]!.iconDay),
+        //                 size:
+        //                     Theme.of(context).textTheme.titleMedium?.fontSize),
+        //             Text("/", style: Theme.of(context).textTheme.titleMedium),
+        //             Icon(
+        //                 QwIcons.parseCode(
+        //                     home.weaDaily.value.daily![idx]!.iconNight),
+        //                 size:
+        //                     Theme.of(context).textTheme.titleMedium?.fontSize),
+        //             const Spacer(),
+        //             Temperature(
+        //               home.weaDaily.value.daily![idx]!.tempMin!,
+        //               style: Theme.of(context).textTheme.titleMedium,
+        //             ),
+        //             Text(
+        //               "/",
+        //               style: Theme.of(context).textTheme.titleMedium,
+        //             ),
+        //             Temperature(
+        //               home.weaDaily.value.daily![idx]!.tempMax!,
+        //               style: Theme.of(context).textTheme.titleMedium,
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // );
         final Widget dailyView = SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(13)),
-              color: Theme.of(context)
-                  .colorScheme
-                  .secondaryContainer
-                  .withOpacity(0.1),
-            ),
-            height: 400,
-            child: ListView.builder(
-              itemCount: home.weaDaily.value.daily?.length,
-              itemBuilder: (ctx, idx) => ListTile(
-                leading: Text(
-                  DateFormat("EEEE", "zh_CN").format(
-                      DateTime.parse(home.weaDaily.value.daily![idx]!.fxDate!)),
-                  style: Theme.of(context).textTheme.titleMedium,
+          child: (home.weaDaily.value.daily?.length ?? 0) <= 0
+              ? const Text("")
+              : Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                  decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.all(Radius.circular(8)),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer
+                          .withOpacity(0.2)),
+                  height: 380,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 15),
+                      width: 800,
+                      child: TempTrendChart(
+                        getDotDataWidget: (v) => Temperature(
+                          v.toInt().toString(),
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                        itemMaxSize: 65,
+                        itemMinSize: 65,
+                        itemMax: home.weaDaily.value.daily!
+                            .map(
+                              (e) => InkWell(
+                                onTap: () => Get.toNamed("dailyDetail",
+                                    arguments:
+                                        home.weaDaily.value.daily!.indexOf(e!)),
+                                child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 5),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          home.getFxTime(
+                                              e?.fxDate ?? "", "EEEE", "zh_CN"),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                        ),
+                                        const SizedBox(height: 15),
+                                        Icon(
+                                          QwIcons.parseCode(e?.iconDay),
+                                          size: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.fontSize,
+                                        ),
+                                      ],
+                                    )),
+                              ),
+                            )
+                            .toList(),
+                        itemMin: home.weaDaily.value.daily!
+                            .map(
+                              (e) => Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 5),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        QwIcons.parseCode(e?.iconNight),
+                                        size: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.fontSize,
+                                      ),
+                                    ],
+                                  )),
+                            )
+                            .toList(),
+                        tempsMax: home.weaDaily.value.daily!
+                            .map((e) => int.parse(e!.tempMax!))
+                            .toList(),
+                        tempsMin: home.weaDaily.value.daily!
+                            .map((e) => int.parse(e!.tempMin!))
+                            .toList(),
+                        colorMax: Colors.blue,
+                      ),
+                    ),
+                  ),
                 ),
-                titleAlignment: ListTileTitleAlignment.center,
-                title: Row(
-                  children: [
-                    const Spacer(),
-                    Icon(
-                        QwIcons.parseCode(
-                            home.weaDaily.value.daily![idx]!.iconDay),
-                        size:
-                            Theme.of(context).textTheme.titleMedium?.fontSize),
-                    Text("/", style: Theme.of(context).textTheme.titleMedium),
-                    Icon(
-                        QwIcons.parseCode(
-                            home.weaDaily.value.daily![idx]!.iconNight),
-                        size:
-                            Theme.of(context).textTheme.titleMedium?.fontSize),
-                    const Spacer(),
-                    Text(
-                      home.weaDaily.value.daily![idx]!.tempMin!,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Icon(
-                      QwIcons.centigrade,
-                      size: Theme.of(context).textTheme.titleMedium?.fontSize,
-                    ),
-                    Text(
-                      "/",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      home.weaDaily.value.daily![idx]!.tempMax!,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Icon(
-                      QwIcons.centigrade,
-                      size: Theme.of(context).textTheme.titleMedium?.fontSize,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         );
         return RefreshIndicator(
-            onRefresh: home.updateWeather,
+            onRefresh: () async {
+              home.updateWeather();
+            },
             child: CustomScrollView(
               slivers: [
                 topBar,

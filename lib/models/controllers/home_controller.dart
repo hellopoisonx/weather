@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:weather/apis/apis.dart';
 import 'package:weather/models/weather.dart';
 
@@ -19,7 +20,7 @@ class HomeController extends GetxController {
   Rx<String> currentRegionId = "".obs;
   Rx<PageStatus> isLoading = PageStatus.ok.obs;
 
-  Future<void> updateWeather() async {
+  void updateWeather() async {
     if (currentRegionId.value.isEmpty) return;
     await getWeatherNow(currentRegionId.value)
         .then((v) => updateWeatherNow = v);
@@ -49,16 +50,23 @@ class HomeController extends GetxController {
     currentRegionId.value = n;
   }
 
-  String get obsTime {
-    if (weaNow.value.now == null) {
-      return "-";
-    }
-    final DateTime dateTime = DateTime.parse(weaNow.value.now!.obstime);
-    return "${dateTime.month}/${dateTime.day} ${dateTime.hour}:${dateTime.minute}";
+  String getFxTime(String time, [String? format, String? local]) {
+    final DateTime dateTime = DateTime.parse(time);
+    return format == "EEEE"
+        ? formatWeekAsChinese(DateFormat(format, local).format(dateTime))
+        : DateFormat(format, local).format(dateTime);
   }
 
-  String getFxTime(String t) {
-    final DateTime dateTime = DateTime.parse(t);
-    return "${dateTime.hour}:${dateTime.minute}";
+  String formatWeekAsChinese(String weekday) {
+    Map<String, String> weekdayToChinese = {
+      '星期一': '周一',
+      '星期二': '周二',
+      '星期三': '周三',
+      '星期四': '周四',
+      '星期五': '周五',
+      '星期六': '周六',
+      '星期日': '周日',
+    };
+    return weekdayToChinese[weekday] ?? weekday;
   }
 }

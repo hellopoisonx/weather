@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:weather/bindings/bindings.dart';
+import 'package:weather/pages/daily_detail.dart';
 import 'package:weather/pages/home.dart';
 import 'package:weather/pages/region.dart';
 import 'package:weather/themes/dark.dart';
@@ -22,12 +23,17 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(
           name: "/",
-          page: () => const SafeArea(child: Home()),
+          page: () => const SafeArea(child: HomePage()),
         ),
         GetPage(
           name: "/region",
-          page: () => const SafeArea(child: Region()),
+          page: () => const SafeArea(child: RegionPage()),
           binding: RegionBinding(),
+        ),
+        GetPage(
+          name: "/dailyDetail",
+          page: () => const SafeArea(child: DailyDetailPage()),
+          binding: DailyDetailBinding(),
         ),
       ],
       title: "weather",

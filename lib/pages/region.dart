@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:weather/models/controllers/home_controller.dart';
 import 'package:weather/models/controllers/region_controller.dart';
 
-class Region extends StatelessWidget {
-  const Region({super.key});
+class RegionPage extends StatelessWidget {
+  const RegionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
